@@ -13,3 +13,7 @@ tools:
   - name: "fastqc"
     owner: "devteam"
     tool_panel_section_label: "FASTA/FASTQ"
+
+  - name: salmon
+    owner: bgruening
+    tool_panel_section_label: "RNA Analysis"

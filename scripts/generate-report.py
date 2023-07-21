@@ -35,12 +35,12 @@ for line in sys.stdin:
     elif "installed successfully" in line:
         # installation is finished
         installing_repo = False
-    elif line.startswith('Installed repositories (0)'):
-        print("""All tools are up to date at {date}, nothing is installed!
-        Jenkins Build #{build_number}""".format(date=today, build_number=os.environ.get('BUILD_NUMBER', '??')))
 
 if not sections:
-    sys.exit(0)
+    print("""
+    Repositories are up to date at {date}, nothing is installed!
+    Jenkins Build #{build_number}
+    """.format(date=today, build_number=os.environ.get('BUILD_NUMBER', '??')))
 
 print("""---
 site: usegalaxy.it

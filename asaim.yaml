@@ -17,3 +17,7 @@ tools:
   - name: salmon
     owner: bgruening
     tool_panel_section_label: "RNA Analysis"
+
+  - name: antismash
+    owner: bgruening
+    tool_panel_section_label: Annotation

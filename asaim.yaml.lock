@@ -17,3 +17,8 @@ tools:
   revisions:
   - 15cd64d7c58b
   tool_panel_section_label: RNA Analysis
+- name: antismash
+  owner: bgruening
+  revisions:
+  - bc88856eddab
+  tool_panel_section_label: Annotation

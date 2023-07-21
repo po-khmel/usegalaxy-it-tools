@@ -37,10 +37,9 @@ for line in sys.stdin:
         installing_repo = False
 
 if not sections:
-    print("""
-    Repositories are up to date at {date}, nothing is installed!
-    Jenkins Build #{build_number}
-    """.format(date=today, build_number=os.environ.get('BUILD_NUMBER', '??')))
+    print("""Repositories are up to date at {date}, nothing is installed!
+    Jenkins Build #{build_number}""".format(date=today, build_number=os.environ.get('BUILD_NUMBER', '??')))
+    sys.exit(0)
 
 print("""---
 site: usegalaxy.it

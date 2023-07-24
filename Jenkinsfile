@@ -1,41 +1,47 @@
 pipeline {
-    agent {
-        docker {
-            image 'python:2.7'
-            args '-u root'
-        }
+    agent any
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '7'))
+    }
+
+    environment {
+        API_KEY = credentials('USEGALAXY_IT_API')
     }
 
     stages {
-        stage('Linting') {
+        stage('Checkout') {
             steps {
-                sh 'pip install -r requirements.txt'
-                sh 'make lint'
+                checkout([$class: 'GitSCM',
+                    branches: [[name: '*/test-jenkins']],
+                    doGenerateSubmoduleConfigurations: false,
+                    extensions: [[$class: 'CleanCheckout']],
+                    userRemoteConfigs: [[credentialsId: 'pokhmel_github_test_tools', url: 'git@github.com:po-khmel/usegalaxy-it-tools.git']]
+                ])
             }
         }
 
-        stage('Updated Trusted Repositories') {
-            when {
-                branch 'master'
-            }
-
+        stage('Build') {
             steps {
-                sh 'git reset --hard origin/master'
-                sh 'git remote -v show'
-                sh 'git checkout master'
-                sh 'git branch'
-                sh 'git branch -a'
-
-                sh 'pip install -r requirements.txt'
-                sh 'make update_trusted'
-
-                sh 'mkdir -p ~/.ssh'
-                sh 'ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts'
-
-                sshagent(['21341801-8530-459e-bed7-40057c7b98ff']) {
-                    sh 'git push git@github.com:usegalaxy-eu/usegalaxy-eu-tools.git master'
+                deleteDir()
+                withPythonEnv('my-virtualenv') {
+                    sh 'pip install -r requirements.txt'
+                    sh 'make fix'
+                    sh 'make install GALAXY_SERVER=https://usegalaxy-it.ext.cineca.it GALAXY_API_KEY=${API_KEY}'
+                    sh 'git add *.yaml.lock'
+                    sh 'git commit -m "Update lock files. Jenkins Build: ${BUILD_NUMBER}" -m "https://github.com/po-khmel/usegalaxy-it-tools/blob/test-jenkins/reports/$(date +%Y-%m-%d-%H-%M)-tool-update.md" || true'
                 }
             }
+        }
+    }
+
+    post {
+        success {
+            archiveArtifacts artifacts: 'report.log', onlyIfSuccessful: true
+            git branch: 'test-jenkins', credentialsId: 'pokhmel_github_test_tools', pushOnlyIfSuccess: true, url: 'git@github.com:po-khmel/usegalaxy-it-tools.git'
+        }
+        always {
+            emailext body: '', recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']], subject: "${env.JOB_NAME} - Build #${env.BUILD_NUMBER} - ${currentBuild.currentResult}", to: 'khmelevskayapv@gmail.com', sendToIndividuals: true, unstable: true
         }
     }
 }

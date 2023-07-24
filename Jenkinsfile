@@ -5,10 +5,6 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '7'))
     }
 
-    environment {
-        API_KEY = credentials('USEGALAXY_IT_API')
-    }
-
     stages {
         stage('Checkout') {
             steps {
@@ -24,12 +20,14 @@ pipeline {
         stage('Build') {
             steps {
                 deleteDir()
-                withPythonEnv('my-virtualenv') {
-                    sh 'pip install -r requirements.txt'
-                    sh 'make fix'
-                    sh 'make install GALAXY_SERVER=https://usegalaxy-it.ext.cineca.it GALAXY_API_KEY=${API_KEY}'
-                    sh 'git add *.yaml.lock'
-                    sh 'git commit -m "Update lock files. Jenkins Build: ${BUILD_NUMBER}" -m "https://github.com/po-khmel/usegalaxy-it-tools/blob/test-jenkins/reports/$(date +%Y-%m-%d-%H-%M)-tool-update.md" || true'
+                withCredentials([file(credentialsId: 'USEGALAXY_IT_API', variable: 'API_KEY')]) {
+                    withPythonEnv('Python-3.8.10') {
+                        sh 'pip install -r requirements.txt'
+                        sh 'make fix'
+                        sh 'make install GALAXY_SERVER=https://usegalaxy-it.ext.cineca.it GALAXY_API_KEY=${API_KEY}'
+                        sh 'git add *.yaml.lock'
+                        sh 'git commit -m "Update lock files. Jenkins Build: ${BUILD_NUMBER}" -m "https://github.com/po-khmel/usegalaxy-it-tools/blob/test-jenkins/reports/$(date +%Y-%m-%d-%H-%M)-tool-update.md" || true'
+                    }
                 }
             }
         }
